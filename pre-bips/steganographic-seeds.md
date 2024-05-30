@@ -1,16 +1,16 @@
-# Steganographic mnemonics for attack-resistant private keys
+# Steganographic seed mnemonics for usability and attack-resistance
 
 > "Anyone who considers arithmetical methods of producing random digits is,
 > of course, in a state of sin." —John Von Neumann
 
 # Abstract
 
-Bitcoin wallets face scrutiny from attackers ranging from casual thieves to nation
-states. With little to no implementation changes, we broader and stronger mnemonic
-possibilities from PBKDF2(), widely present in all BIP-39-compatible wallets.
-Users of this BIP can use playing cards, chess boards, paper napkins, or virtually
-any easy-to-repudiate physical object to derive and store seeds with greater
-portability, greater entropy, and greater steganography.
+Bitcoin wallets face scrutiny from attackers ranging from casual thieves to state
+actors. With little to no implementation changes, we unlock greater mnemonic
+possibilities from PBKDF2(), widely used by all BIP-39-compatible wallets.
+Users of this BIP can generate and store seeds with easy-to-repudiate
+physical objects including playing cards, chess boards, and paper napkins.
+As a result seed mnemonics enjoy greater portability, entropy, and steganography.
 
 
 # Motivation
@@ -29,16 +29,16 @@ making pure offline seeds impossible.
 but, unfortunately for the security, convenience, and trust of the users, vary
 in how they convert user entropy to the proper binary seed.
 
-    1. Users must run their own vendor-specific code to verify that the
+    1. Users are required to run their own vendor-specific code to verify that the
     vendor has actually used their provided entropy. Said verification often _still_
     requires blind trust (how does the user know that entropy produced the right
     binary seed?) and is prohibitively technical for many users.
 
-    1. The time, effort, and equipment needed to enter the result of 100 six-sided
-    die rolls—the minimum number of rolls to surpass 256 bits of entropy—is cumbersome. 
+    1. It is cumbersome to manually enter the results of 100 six-sided die rolls,
+    the minimum number of rolls to surpass 256 bits of entropy.
     
-    1. Dice are a terrible storage medium since there are usually fewer dice than
-    rolls and since dice are easily mixed up, leading to loss of the original seed.
+    1. Dice rolls are poor for storing secrets since there are usually fewer dice
+    than rolls and since dice are easily mixed up.
     
         > Compare the effort and portability of these 100 rolls
         > to the far easier and more portable shuffled deck of cards.
@@ -88,17 +88,17 @@ this BIP.
 risk that these users provide weak inputs that contain too little entropy or weak
 entropy (e.g. common phrases).
 
-    > This risk is overcome with an easy-to-implement entropy measure and a warning
-    > to the user.
+    > Implementers will mitigate this risk with an easy-to-implement entropy
+    > measure and warning to the user.
 
-1. BIP-39 includes checksum bits in the final word, providing some protection
-against errors. The present proposal foregoes both the benefits and overhead of
-the BIP-39 checksum (which is infeasible to compute by hand) in favor of a much
-broader set of steganographic mnemonics that can be stored, generated, and carried
-in situations of urgency and scarcity.
+1. BIP-39 includes checksum bits in the final word, offering some protection
+against erroneous entry. The present proposal surrenders both the advantages (integrity)
+and disadvantages (cannot be computed by hand) of the BIP-39 checksum bits
+in favor of a much broader set of steganographic mnemonics that can be stored,
+generated, and carried in situations of urgency and scarcity.
 
-    > Sophisticated users may choose to implement their own checksums or
-    > error-correcting codes.
+    > Advanced users can choose to implement their own checksums or error-correcting
+    > codes.
 
 
 ## Alternatives
@@ -127,14 +127,14 @@ PKBDF2(
 
 `nfkd()` converts the input string to Unicode normalization form KD.
 
-Thankfully there are no requirements in `PBKDF2()` on the contents of either
-the _mnemonic_ or _passphrase_, so the corresponding code is easy to modify.
+Fortunately `PBKDF2()` does not limit the domain either the `password` or `salt`
+argument. Existing implementations are therefore easy to update.
 We propose _no change_ to passphrase entry, validation, or application.
 
-The _mnemonic_ must be interpreted as a raw string to permit as wide an array of
-input characters as possible. (See the following section for details.)
+Applications should regard the _mnemonic_ as a raw string to permit the widest
+possible array of input characters. (See the following section for details.)
 
-In the interest of backward compatibility we propose that implementations
+In the interest of backward compatibility we propose that existing BIP-39 implementations
 make only the following changes:
 
 1. If they do already, relax any input validation that requires the mnemonic to
@@ -199,11 +199,9 @@ $$ E(mnemonic) := \log_2(C^{len(mnemonic)}) $$
 
 ## Playing cards
 
-A deck of cards is widely available and, after seven or more riffle shuffles,
-encodes approximately 225 bits of entropy, making it slightly stronger than 21
-BIP-39 seed words.
-
-Moreover, decks can be carried on one's person without raising an eyebrow.
+A common deck of 52 cards encodes approximately 225 bits of entropy,
+more entropy than 21 BIP-39 words. Such decks can be carried on one's person
+without raising an eyebrow.
 
 Users might enter cards in deck order as follows:
 
