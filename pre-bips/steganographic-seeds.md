@@ -6,8 +6,8 @@
 # Abstract
 
 Bitcoin wallets face scrutiny from attackers ranging from casual thieves to nation
-states. With little to no implementation changes, we uncork new seed possibilities from
-PBKDF2(), widely present in any BIP-39-compatible wallet.
+states. With little to no implementation changes, we broader and stronger mnemonic
+possibilities from PBKDF2(), widely present in all BIP-39-compatible wallets.
 Users of this BIP can use playing cards, chess boards, paper napkins, or virtually
 any easy-to-repudiate physical object to derive and store seeds with greater
 portability, greater entropy, and greater steganography.
@@ -103,11 +103,11 @@ in situations of urgency and scarcity.
 
 ## Alternatives
 
-Alternative to the proposed soft changes to BIP-39, it would be possible to
-use the BIP-85 HMAC (`HMAC-SHA512(key="bip-entropy-from-k", msg=mnemonic)`) on
-mnemonics from this BIP and then use BIP-85's application `32'` to derive new
-seed words. But this would not benefit the Bitcoin community as quickly or as
-broadly as standing on the shoulders of the far more widely supported BIP-39.
+Alternative to the proposed soft changes to BIP-39, it is admittedly possible to
+generate a master key with either the BIP-32 algorithm on `PBKDF2(mnemonic)`
+and then use BIP-85's application `32'` to derive new seed words. But this would
+not benefit the Bitcoin community as quickly or as broadly as standing on the
+shoulders of the far more widely supported BIP-39.
 
 
 # Specification
