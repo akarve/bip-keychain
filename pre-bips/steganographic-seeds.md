@@ -5,12 +5,13 @@
 
 # Abstract
 
-Bitcoin wallets face scrutiny from attackers ranging from casual thieves to state
-actors. With little to no implementation changes, we unlock greater mnemonic
-possibilities from PBKDF2(), widely used by all BIP-39-compatible wallets.
-Users of this BIP can generate and store seeds with easy-to-repudiate
-physical objects including playing cards, chess boards, and paper napkins.
-As a result seed mnemonics enjoy greater portability, entropy, and steganography.
+Bitcoin seed mnemonics face attackers ranging from casual thieves to state actors.
+We propose strictly soft changes over BIP-39 to unlock broader mnemonic options
+from PBKDF2().
+Users of this BIP can generate and store seeds with common physical objects that
+are plausibly deniable: playing cards, chess boards, and paper napkins to name a
+few. As a result seed mnemonics gain greater portability, memorability, entropy,
+and steganography over BIP-39 mnemonics.
 
 
 # Motivation
