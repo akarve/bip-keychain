@@ -173,14 +173,14 @@ if validate(norm_mnemonic):
 
 ## `validate()`
 
-`validate()` must at a minimum estimate the simplified Shannon entropy `E()` of
-the user proposed mnemonic and must refuse the mnemonic if the entropy is less
-than 128 bits (equivalent to 12 BIP-39 seed words).
+`validate()` must at a minimum estimate the simplified, implied Shannon entropy
+`SE()` of the user proposed mnemonic and must refuse the mnemonic if the entropy
+is less than 128 bits (equivalent to 12 BIP-39 seed words).
 
 Implementations must know the cardinality `C` of the mnemonic character set.
-Applications must support at a bare minium an input cardinality of **44**
-(26 letters, 10 digits, punctuation including `-, !, ?, {, }, ', +, =`)
-but higher values for `C` are both permissible and recommended.
+Applications must support at a bare minium an input cardinality of **100**
+(the number of printable ASCII characters) but higher values for `C` are both
+permissible and recommended.
 As suggested below, the higher the cardinality of the input set, the greater the
 steganographic potential.
 
@@ -190,7 +190,11 @@ Said complexity measures must be submitted to this spec for consistent results
 across wallet vendors.
 
 
-### Simplfied Shannon entropy, `E()`
+### Simplified, implied Shannon entropy, `SE()`
+
+We call this the "simplified, implied" Shannon entropy because it does not represent
+the proper Shannon entropy of the mnemonic but the total possible entropy of the input
+characters set at the given length.
 
 $$ E(mnemonic) := \log_2(C^{len(mnemonic)}) $$
 
