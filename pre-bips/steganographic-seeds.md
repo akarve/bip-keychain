@@ -1,17 +1,17 @@
 # Steganographic seed mnemonics for usability and attack-resistance
 
-> "Anyone who considers arithmetical methods of producing random digits is,
+> "Anyone who considers arithmetical methods of producing  random digits is,  
 > of course, in a state of sin." —John Von Neumann
 
 # Abstract
 
 Bitcoin seed mnemonics face attackers ranging from casual thieves to state actors.
-We propose strictly soft changes over BIP-39 to unlock broader mnemonic options
+We propose soft changes to BIP-39 seed creation to unlock broader mnemonic options
 from PBKDF2().
-Users of this BIP can generate and store seeds with common physical objects that
-are plausibly deniable: playing cards, chess boards, and paper napkins to name a
-few. As a result seed mnemonics gain greater portability, memorability, entropy,
-and steganography over BIP-39 mnemonics.
+Users of this BIP can generate and store seeds offline with common physical objects
+that are plausibly deniable: playing cards, chess boards, and paper napkins to name
+a few. As a result seed mnemonics gain greater portability, memorability, entropy,
+and steganography as compared to BIP-39 mnemonics.
 
 
 # Motivation
@@ -23,8 +23,8 @@ as a Bitcoin passphrase to be scrutinized or seized outright.
 
 1. BIP-39 "mnemonics" are not particularly easy to remember.
 
-1. Computing BIP-39's checksum bits necessitates a computer,
-making pure offline seeds impossible.
+1. Computing BIP-39's checksum bits necessitates a computer, making completely
+offline seeds impossible.
 
 1. Some hardware vendors support independent sources of entropy such as die rolls
 but, unfortunately for the security, convenience, and trust of the users, vary
@@ -45,7 +45,7 @@ in how they convert user entropy to the proper binary seed.
         > to the far easier and more portable shuffled deck of cards.
 
 The above weaknesses cause all Bitcoin wallets to lose,
-_due to no fundamental implementtion limit whatsoever_,
+**due to no fundamental limitation whatsoever**,
 the following benefits:
 
 1. Portability in physical media.
@@ -58,13 +58,12 @@ are under attack.
 1. The ability to generate, with no electronics, a cryptographically
 strong seed that will later work with many hardware wallets.
 
-1. Moore's-law-resistant mnemonics with far more than 256 bits of entropy.
+1. Moore's-law-resistant mnemonics that encode far more than 256 bits of entropy.
 
-    > Although 257 bits begins to exceed today's ECDSA private keys,
+    > Although more than 256 bits of entropy exceeds today's ECDSA private keys,
     > it rightfully leaves the door open for stronger keys in the future
     > and further permits repurposing of today's mnemonics for tomorrow's larger
     > keys.
-
 
 **As result, Bitcoin users seeking to evade oppressive governments and other attackers
 have fewer defenses than the protocol naturally affords.**
@@ -79,8 +78,8 @@ in hardware and software wallets.
 We note that **the present spec is a _soft_ modification of BIP-39**. We propose
 that wallets admit a proper superset of BIP-39 mnemonics.
 Any and all existing BIP-39 mnemonics and passphrases are fully compatible with
-this BIP.
-
+this BIP. Furthermore, wallets can and should continue to validate BIP-39 mnemonics
+as in the past.
 
 
 ## Risks
@@ -90,15 +89,18 @@ risk that these users provide weak inputs that contain too little entropy or wea
 entropy (e.g. common phrases).
 
     > Implementers will mitigate this risk with an easy-to-implement entropy
-    > measure and warning to the user.
+    > measure and message to the user.
 
 1. BIP-39 includes checksum bits in the final word, offering some protection
-against erroneous entry. The present proposal surrenders both the advantages (integrity)
+against erroneous entry. The present proposal eliminates both the advantages (integrity)
 and disadvantages (cannot be computed by hand) of the BIP-39 checksum bits
 in favor of a much broader set of steganographic mnemonics that can be stored,
 generated, and carried in situations of urgency and scarcity.
 
-    > Advanced users can choose to implement their own checksums or error-correcting
+    > BIP-39 checksum validation _shall remain in place_ (unchanged) for BIP-39
+    > mnemonics.
+
+    > Advanced users might choose to implement their own checksums or error-correcting
     > codes.
 
 
@@ -148,7 +150,7 @@ impact of entry errors.
     > worth making to improve the likelihood of user access to their funds.
 
 1. If they do not already, introduce a `validate()` routine that measures, and
-possibly rejects, the simplified entropy of the input mnemonic.
+possibly rejects, the _relative entropy_ of the input mnemonic.
 
 With these small changes the world of steganograpic seeds and all of the benefits
 outlined above accrue to Bitcoin users.
@@ -157,14 +159,13 @@ The soft alteration and proposed application of `PBKDF2()` follows:
 
 ```
 norm_mnemonic := lower(nfkd(mnemonic))
-
-if validate(norm_mnemonic):
-    PKBDF2(
-        password=bin(norm_mnemonic),
-        salt=bin(nfkd("mnemonic" || passphrase))),
-        hash_name="HMAC-SHA512",
-        iterations=2048,
-    )
+validate(norm_mnemonic)
+PKBDF2(
+    password=bin(norm_mnemonic),
+    salt=bin(nfkd("mnemonic" || passphrase))),
+    hash_name="HMAC-SHA512",
+    iterations=2048,
+)
 ```
 
 > Current implementations likely already perform a validation pass to check for proper,
@@ -173,16 +174,20 @@ if validate(norm_mnemonic):
 
 ## `validate()`
 
-`validate()` must at a minimum estimate the simplified, implied Shannon entropy
-`SE()` of the user proposed mnemonic and must refuse the mnemonic if the entropy
-is less than 128 bits (equivalent to 12 BIP-39 seed words).
+`validate()` must at a minimum estimate the relative entropy `RE()` of
+the user proposed mnemonic and must refuse the mnemonic if the entropy is less
+than a threshold (we recommend a threshold of 0.5).
+
+`validate()` must implement a `strict` boolean flag such that, when strict
+is enabled, it checks the mnemonic token count and elements for membership in the
+(localized) BIP-39 list and a correct BIP-39 checksum. When `strict` is disabled
+the only gating factor to accepting a user seed may be insufficient `RE()`.
 
 Implementations must know the cardinality `C` of the mnemonic character set.
 Applications must support at a bare minium an input cardinality of **100**
 (the number of printable ASCII characters) but higher values for `C` are both
-permissible and recommended.
-As suggested below, the higher the cardinality of the input set, the greater the
-steganographic potential.
+permissible and recommended.  As suggested below, the higher the cardinality of
+the input set, the greater the steganographic potential.
 
 More nuanced and even off-the-shelf password complexity measures might also be used
 for stricter validation provided that they do not invalidate any BIP-39 inputs.
@@ -190,16 +195,41 @@ Said complexity measures must be submitted to this spec for consistent results
 across wallet vendors.
 
 
-### Simplified, implied Shannon entropy, `SE()`
+## Relative entropy, `RE()`
 
-We call this the "simplified, implied" Shannon entropy because it does not represent
-the proper Shannon entropy of the mnemonic but the total possible entropy of the input
-characters set at the given length.
+We define the Shannon Entropy `SE` as follows:
 
-$$ E(mnemonic) := \log_2(C^{len(mnemonic)}) $$
+$$ SE(X) := - \sum_{i} p(x_i) \log_2 p(x_i) $$
+
+As an optimization for fixed `X` with all unique entries and cardinality `C`:
+
+$$ SE(X) := log_2(C)$$
+
+> Intuitively the above is the (fractional) number of bits needed to represent all
+> characters in the `universe`.
 
 
-# Examples
+The  relative entropy is simply the following:
+
+$$ RE(mnemonic\_tokens, universe) := SE(mnemonic) / SE(universe)$$
+
+`universe` is the list of all possible input tokens. `mnemonic_tokens` is a tokenized
+list of the inputs. Tokens may vary in length per the universe and application,
+though applications can start withe one token per ASCII printable character.
+
+`RE()` ranges from 0 to 1 when `mnemonic_tokens` are all unique. An `RE()` of 0.5
+reflects that the user has provided enough information as providing one instance
+of half of all input tokens.
+
+
+## Examples of `RE()` for representative inputs
+
+* [ ] Dice, cards, chess, bad + good text passwords
+* [ ] Show how this leads to standard dice verification and fingerprinting
+across all hardware vendors (phew)
+
+
+# Steganographic mnemonic examples
 
 
 ## Playing cards
@@ -211,7 +241,7 @@ without raising an eyebrow.
 Users might enter cards in deck order as follows:
 
 ```
-2s-10s-Kc-10h-5s-...
+2S 10S kC 10H 5S ...
 ```
 
 ## Chess, three different ways
@@ -267,7 +297,7 @@ uncovered by Fischer. -- Wade} Na4 {!}
 
 Alternatively a user might choose to subtly mark the 64 squares of two chess boards
 to represent a 1 or 0 in each of 128 unique positions, storing 128 bits of entropy
-(equivalent to 12 BIP-39 seed words).
+(equivalent to 12 BIP-39 seed words). Random bits can be generated with a coin.
 
 
 ## Any board game
@@ -276,7 +306,7 @@ One can imagine steganographic secrets similar to chess for Monopoly, Go, or any
 board game.
 
 
-## Dice but different
+## Dice, but different
 
 We noted above that if the user were to roll and then store 100 dice that it would
 be impractical to retain the original order.
@@ -288,10 +318,10 @@ easy to retain and order and provide greater entropy than 18 BIP-39 seed words.
 
 ## A paper napkin
 
-In addition to a literal napkin sketch (with putative phone numbers, measurements,
+In addition to a literal napkin sketch (with phone numbers, measurements,
 or harmless notes) users without access to coins, dice, game boards or electronics
 could generate "poor man's entropy" by dropping a stone onto a napkin divided into 
 equal-sized quadrants to generate entropy.
 
-Said "poor man's entropy" is not recommended but is provided as an illustration of
+Said "poor man's entropy" is not recommended but nevertheless illustrates
 the vast expansion in capability and steganography that obtains from this BIP.
