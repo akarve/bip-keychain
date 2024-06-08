@@ -6,7 +6,9 @@
 # Abstract
 
 Bitcoin seed mnemonics face attackers ranging from casual thieves to state actors.
-We propose soft changes to BIP-39 seed creation to unlock broader mnemonic options
+We propose backward-compatible, non-breaking changes to BIP-39 master seed derivation
+to unlock broader mnemonic options
+
 from PBKDF2().
 Users of this BIP can generate and store seeds offline with common physical objects
 that are plausibly deniable: playing cards, chess boards, and paper napkins to name
@@ -100,14 +102,13 @@ generated, and carried in situations of urgency and scarcity.
 # Specification
 
 **The present spec is fully backwards-compatible with BIP-39 mnemonics**.
-We introduce a new input "language" `Free` that admits a superset of BIP-39 mnemonics
-Wallets can and should continue to validate BIP-39 mnemonics as in the past.
+We introduce a new input "language" `Free` that admits a superset of BIP-39 English
+mnemonics. Wallets can and should continue to validate BIP-39 mnemonics as in the past.
 `Free` should be treated as a new input language, similar to English, French, or
 any of the BIP-39 languages.
 
-`Free` should allow at a minimum the ASCII printable characters, minus capital
+`Free` characters are the ASCII printable characters, minus capital
 letters.
-
 
 BIP-39 derives binary seeds by applying `PBKDF2()` to a mnemonic and passhprase
 as follows:
@@ -155,9 +156,10 @@ if language == "Free":
     )
 ```
 
-
 The output of PKBDF2 is converted to a master seed as in BIP-39.
-
+In this way mnemonic from most BIP-39 languages (English, French, Spanish, Czech,
+Italian, and Portuguese) will produce exactly the same master seed if entered
+through `Free`.
 
 ## `validate()`
 
@@ -166,15 +168,10 @@ the user proposed mnemonic and must refuse the mnemonic if the entropy is less
 than a threshold (we recommend a threshold of 0.5).
 
 Implementations must know the cardinality `C` of the mnemonic character set.
-Applications must support at a bare minium an input cardinality of **74**
-(the number of printable ASCII characters) but higher values for `C` are both
-permissible and recommended.  As suggested below, the higher the cardinality of
-the input set, the greater the steganographic potential.
+Applications must support an input cardinality of **74**
+(the number of printable ASCII characters).
 
     0123456789abcdefghijklmnopqrstuvwxyz!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~ \t\n\r\x0b\x0c
-
-
-## `complexity()`
 
 The Shannon Entropy `SE` of a string is as follows:
 
@@ -220,13 +217,13 @@ rahd() := min(hd(norm_mnemonic), hd(norm_mnemonic.reverse())) / len(norm_mnemoni
 As with `re()`, `rahd()` ranges from 0 to 1.
 
 ```
-complexity := (re(norm_mnemonic) + rahd(norm_mnemonic)) / 2
+validate := F(re(norm_mnemonic) + rahd(norm_mnemonic)) / 2
 ```
 
-If complexity is less than a given threshold (TBD) the wallet should warn the
-user.
+If `validate()` returns a complexity less than a given threshold (TBD) the wallet
+should warn the user.
 
-### TODO: examples of `complexity()` for representative inputs
+### TODO: examples of `validate()` for representative inputs
 
 * [ ] Dice, cards, chess, bad + good text passwords
 * [ ] Show how this leads to standard dice verification and fingerprinting
