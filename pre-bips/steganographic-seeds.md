@@ -1,4 +1,4 @@
-# Steganographic seed mnemonics for usability and attack-resistance
+# Free seed mnemonics for steganography and attack-resistance
 
 > "Anyone who considers arithmetical methods of producing  random digits is,  
 > of course, in a state of sin." —John Von Neumann
@@ -23,8 +23,8 @@ as a Bitcoin passphrase to be scrutinized or seized outright.
 
 1. BIP-39 "mnemonics" are not particularly easy to remember.
 
-1. Computing BIP-39's checksum bits necessitates a computer, making completely
-offline seeds impossible.
+1. Computing BIP-39's checksum bits necessitates a computer, making offline
+seeds impossible.
 
 1. Some hardware vendors support independent sources of entropy such as die rolls
 but, unfortunately for the security, convenience, and trust of the users, vary
@@ -38,7 +38,7 @@ in how they convert user entropy to the proper binary seed.
     1. It is cumbersome to manually enter the results of 100 six-sided die rolls,
     the minimum number of rolls to surpass 256 bits of entropy.
     
-    1. Dice rolls are poor for storing secrets since there are usually fewer dice
+    1. Die rolls are poor for storing secrets since there are usually fewer dice
     than rolls and since dice are easily mixed up.
     
         > Compare the effort and portability of these 100 rolls
@@ -62,8 +62,8 @@ strong seed that will later work with many hardware wallets.
 
     > Although more than 256 bits of entropy exceeds today's ECDSA private keys,
     > it rightfully leaves the door open for stronger keys in the future
-    > and further permits repurposing of today's mnemonics for tomorrow's larger
-    > keys.
+    > and further permits today's mnemonics to be repurposed, without change,
+    > for tomorrow's larger keys.
 
 **As result, Bitcoin users seeking to evade oppressive governments and other attackers
 have fewer defenses than the protocol naturally affords.**
@@ -75,20 +75,13 @@ in hardware and software wallets.
 
 # Risks, remedies, and alternatives
 
-We note that **the present spec is a _soft_ modification of BIP-39**. We propose
-that wallets admit a proper superset of BIP-39 mnemonics.
-Any and all existing BIP-39 mnemonics and passphrases are fully compatible with
-this BIP. Furthermore, wallets can and should continue to validate BIP-39 mnemonics
-as in the past.
-
-
 ## Risks
 
 1. Giving users more sources and options for mnemonics increases the
 risk that these users provide weak inputs that contain too little entropy or weak
 entropy (e.g. common phrases).
 
-    > Implementers will mitigate this risk with an easy-to-implement entropy
+    > Implementers must mitigate this risk with an easy-to-implement entropy
     > measure and message to the user.
 
 1. BIP-39 includes checksum bits in the final word, offering some protection
@@ -104,20 +97,20 @@ generated, and carried in situations of urgency and scarcity.
     > codes.
 
 
-## Alternatives
-
-Alternative to the proposed soft changes to BIP-39, it is admittedly possible to
-generate a master key with either the BIP-32 algorithm on `PBKDF2(mnemonic)`
-and then use BIP-85's application `32'` to derive new seed words. But this would
-not benefit the Bitcoin community as quickly or as broadly as standing on the
-shoulders of the far more widely supported BIP-39.
-
-
 # Specification
+
+**The present spec is fully backwards-compatible with BIP-39 mnemonics**.
+We introduce a new input "language" `Free` that admits a superset of BIP-39 mnemonics
+Wallets can and should continue to validate BIP-39 mnemonics as in the past.
+`Free` should be treated as a new input language, similar to English, French, or
+any of the BIP-39 languages.
+
+`Free` should allow at a minimum the ASCII printable characters, minus capital
+letters.
+
 
 BIP-39 derives binary seeds by applying `PBKDF2()` to a mnemonic and passhprase
 as follows:
-
 
 ```
 PKBDF2(
@@ -132,74 +125,60 @@ PKBDF2(
 
 Fortunately `PBKDF2()` does not limit the domain either the `password` or `salt`
 argument. Existing implementations are therefore easy to update.
-We propose _no change_ to passphrase entry, validation, or application.
+Applications must _not change_ passphrase entry, validation, normaliztion, or application.
 
 Applications should regard the _mnemonic_ as a raw string to permit the widest
 possible array of input characters. (See the following section for details.)
 
 In the interest of backward compatibility we propose that existing BIP-39 implementations
-make only the following changes:
+treat `Free` as the tenth input "language" with the following differences from the 9
+BIP-39 languages:
 
-1. If they do already, relax any input validation that requires the mnemonic to
-come from a BIP-39 word list.
+1. If they do not already, lower the case of all input letters.
+Strangely BIP-39 is silent on the subject of case. 
 
-1. If they do not already, lower the case of `nfkd(mnemonic)` to reduce the
-impact of entry errors.
+1. If they do not already, `strip` the `Free` mnemonic of surrounding whitespace
+and split it on the regular expression `\s+`.
 
-    > Although this reduces input entropy, we believe it is a tradeoff
-    > worth making to improve the likelihood of user access to their funds.
+1. Apply `nfkd()` to the `Free` mnemonic.
 
-1. If they do not already, introduce a `validate()` routine that measures, and
-possibly rejects, the _relative entropy_ of the input mnemonic.
-
-With these small changes the world of steganograpic seeds and all of the benefits
-outlined above accrue to Bitcoin users.
-
-The soft alteration and proposed application of `PBKDF2()` follows:
 
 ```
-norm_mnemonic := lower(nfkd(mnemonic))
-validate(norm_mnemonic)
-PKBDF2(
-    password=bin(norm_mnemonic),
-    salt=bin(nfkd("mnemonic" || passphrase))),
-    hash_name="HMAC-SHA512",
-    iterations=2048,
-)
+if language == "Free":
+    norm_mnemonic = lower(nfkd(split("\s+", mnemonic)))
+    validate(norm_mnemonic)
+    PKBDF2(
+        password=bin(norm_mnemonic),
+        salt=bin(nfkd("mnemonic" || passphrase))),
+        hash_name="HMAC-SHA512",
+        iterations=2048,
+    )
 ```
 
-> Current implementations likely already perform a validation pass to check for proper,
-> localized BIP-39 seed words.
+
+The output of PKBDF2 is converted to a master seed as in BIP-39.
 
 
 ## `validate()`
 
-`validate()` must at a minimum estimate the relative entropy `RE()` of
+`validate()` must at a minimum estimate the complexity `complexity()` of
 the user proposed mnemonic and must refuse the mnemonic if the entropy is less
 than a threshold (we recommend a threshold of 0.5).
 
-`validate()` must implement a `strict` boolean flag such that, when strict
-is enabled, it checks the mnemonic token count and elements for membership in the
-(localized) BIP-39 list and a correct BIP-39 checksum. When `strict` is disabled
-the only gating factor to accepting a user seed may be insufficient `RE()`.
-
 Implementations must know the cardinality `C` of the mnemonic character set.
-Applications must support at a bare minium an input cardinality of **100**
+Applications must support at a bare minium an input cardinality of **74**
 (the number of printable ASCII characters) but higher values for `C` are both
 permissible and recommended.  As suggested below, the higher the cardinality of
 the input set, the greater the steganographic potential.
 
-More nuanced and even off-the-shelf password complexity measures might also be used
-for stricter validation provided that they do not invalidate any BIP-39 inputs.
-Said complexity measures must be submitted to this spec for consistent results
-across wallet vendors.
+    0123456789abcdefghijklmnopqrstuvwxyz!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~ \t\n\r\x0b\x0c
 
 
-## Relative entropy, `RE()`
+## `complexity()`
 
-We define the Shannon Entropy `SE` as follows:
+The Shannon Entropy `SE` of a string is as follows:
 
-$$ SE(X) := - \sum_{i} p(x_i) \log_2 p(x_i) $$
+$$ se(X) := - \sum_{i} p(x_i) \log_2 p(x_i) $$
 
 As an optimization for fixed `X` with all unique entries and cardinality `C`:
 
@@ -208,28 +187,64 @@ $$ SE(X) := log_2(C)$$
 > Intuitively the above is the (fractional) number of bits needed to represent all
 > characters in the `universe`.
 
-
 The  relative entropy is simply the following:
 
-$$ RE(mnemonic\_tokens, universe) := SE(mnemonic) / SE(universe)$$
+$$ re(mnemonic\_tokens, universe) := SE(mnemonic) / SE(universe)$$
 
 `universe` is the list of all possible input tokens. `mnemonic_tokens` is a tokenized
 list of the inputs. Tokens may vary in length per the universe and application,
 though applications can start withe one token per ASCII printable character.
 
-`RE()` ranges from 0 to 1 when `mnemonic_tokens` are all unique. An `RE()` of 0.5
+`re()` ranges from 0 to 1 when `mnemonic_tokens` are all unique. An `re()` of 0.5
 reflects that the user has provided enough information as providing one instance
 of half of all input tokens.
 
+`re()` alone is not a complete measure of password complexity since it does
+not take order into account. For instance the string `"abc...xyz"` and its
+reverse both have hight relative entropy but are highly predictable.
 
-## Examples of `RE()` for representative inputs
+To correct for this we can use the Hamming Distance, `hd()`, which counts the
+number of characters that are not in sorted order:
+
+$$
+\text{Hamming Distance} = \sum_{i=1}^{n} (s_i \neq t_i)
+$$
+
+Since undesirable order might be forwards of backwards we take the Relative
+Absolute Hamming Distance `rahd()`:
+
+```
+rahd() := min(hd(norm_mnemonic), hd(norm_mnemonic.reverse())) / len(norm_mnemonic)
+```
+
+As with `re()`, `rahd()` ranges from 0 to 1.
+
+```
+complexity := (re(norm_mnemonic) + rahd(norm_mnemonic)) / 2
+```
+
+If complexity is less than a given threshold (TBD) the wallet should warn the
+user.
+
+### TODO: examples of `complexity()` for representative inputs
 
 * [ ] Dice, cards, chess, bad + good text passwords
 * [ ] Show how this leads to standard dice verification and fingerprinting
 across all hardware vendors (phew)
 
 
-# Steganographic mnemonic examples
+# Reference implementation 
+
+* https://github.com/akarve/bipsea
+
+## Example
+
+```sh
+bipsea validate -f free -m "$(cat input.txt)" | bipsea xprv
+```
+
+
+# Example steganographic mnemonics in `Free`
 
 
 ## Playing cards
@@ -243,6 +258,7 @@ Users might enter cards in deck order as follows:
 ```
 2S 10S kC 10H 5S ...
 ```
+
 
 ## Chess, three different ways
 
