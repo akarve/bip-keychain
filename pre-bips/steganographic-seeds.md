@@ -6,10 +6,9 @@
 # Abstract
 
 Bitcoin seed mnemonics face attackers ranging from casual thieves to state actors.
-We propose backward-compatible, non-breaking changes to BIP-39 master seed derivation
-to unlock broader mnemonic options
+We propose a simple, non-breaking addition to BIP-39 master seed derivation
+to unlock broader mnemonic options from PBKDF2().
 
-from PBKDF2().
 Users of this BIP can generate and store seeds offline with common physical objects
 that are plausibly deniable: playing cards, chess boards, and paper napkins to name
 a few. As a result seed mnemonics gain greater portability, memorability, entropy,
